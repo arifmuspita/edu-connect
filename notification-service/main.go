@@ -7,6 +7,8 @@ import (
 	"notification_service/usecase"
 
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"os"
 )
 
 func main() {
@@ -26,5 +28,19 @@ func main() {
 	go queue.StartConsumer(config.RabbitMQConn, notificationUseCase, logger)
 
 	logger.Info("Notification Service is running...")
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Notification Service is running"))
+	})
+
+	port := os.Getenv("PORT")
+
+	go func() {
+		logger.Infof("Starting HTTP server on port %s", port)
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			logger.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+	
 	select {}
 }
