@@ -1,25 +1,18 @@
 steps:
   # Build user-service
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/proven-mind-385501/user-service-example', './user-service-example']
+    args: ['build', '-t', 'gcr.io/triple-method-453308-v7/user-service', './user-service']
   
   # Build institution-service
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/proven-mind-385501/institution-service', './institution-service']
-  
-  # Build transaction-service
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/proven-mind-385501/transaction-service', './transaction-service']
+    args: ['build', '-t', 'gcr.io/triple-method-453308-v7/notification-service', './notification-service']
 
   # Push images to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/proven-mind-385501/user-service-example']
+    args: ['push', 'gcr.io/triple-method-453308-v7/user-service']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/proven-mind-385501/institution-service']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/proven-mind-385501/transaction-service']
+    args: ['push', 'gcr.io/triple-method-453308-v7/notification-service']
 
 images:
-  - 'gcr.io/proven-mind-385501/user-service-example'
-  - 'gcr.io/proven-mind-385501/institution-service'
-  - 'gcr.io/proven-mind-385501/transaction-service'
+  - 'gcr.io/triple-method-453308-v7/user-service'
+  - 'gcr.io/triple-method-453308-v7/notification-service'
