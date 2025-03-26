@@ -6,9 +6,10 @@ import (
 	"notification_service/repository"
 	"notification_service/usecase"
 
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -41,6 +42,6 @@ func main() {
 			logger.Fatalf("Failed to start HTTP server: %v", err)
 		}
 	}()
-	
+
 	select {}
 }

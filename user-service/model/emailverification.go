@@ -3,7 +3,7 @@ package model
 import "time"
 
 type EmailVerification struct {
-	EmailVerificationID uint      `gorm:"primaryKey"`
+	EmailVerificationID uint      `gorm:"primaryKey" json:"email_verification_id"`
 	Email               string    `gorm:"type:varchar(100);not null"`
 	Token               string    `gorm:"type:varchar(255);not null;unique"`
 	ExpiresAt           time.Time `gorm:"not null"`
