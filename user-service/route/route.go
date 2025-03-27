@@ -1,12 +1,10 @@
 package route
 
 import (
-	"os"
 	"userService/handler"
 	"userService/middleware"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 )
 
 func Init(e *echo.Echo,
@@ -14,13 +12,8 @@ func Init(e *echo.Echo,
 	verificationHandler handler.VerificationHandler,
 	passwordResetHandler handler.PasswordResetHandler) {
 
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetOutput(os.Stdout)
-	logger.SetLevel(logrus.InfoLevel)
-
 	v1 := e.Group("/v1")
-	v1.Use(middleware.LogrusMiddleware(logger))
+	v1.Use(middleware.LogrusMiddleware())
 
 	v1.POST("/register", userHandler.Register)
 

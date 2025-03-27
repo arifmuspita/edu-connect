@@ -22,14 +22,15 @@ type IUserRepository interface {
 }
 
 type userRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *logrus.Entry
 }
 
-var logger = logrus.New()
-
-func NewUserRepository(db *gorm.DB) IUserRepository {
+func NewUserRepository(db *gorm.DB, baseLogger *logrus.Logger) IUserRepository {
+	enrichedLogger := baseLogger.WithField("layer", "repository")
 	return &userRepository{
-		db: db,
+		db:     db,
+		logger: enrichedLogger,
 	}
 }
 
@@ -49,15 +50,20 @@ func (r *userRepository) GetAllPaginated(page int, limit int) ([]model.User, int
 	offset := (page - 1) * limit
 
 	if err := r.db.Model(&model.User{}).Count(&total).Error; err != nil {
-		logger.WithError(err).Error("Failed to count users")
+		r.logger.WithError(err).Error("Failed to count users")
 		return nil, 0, err
 	}
 
 	if err := r.db.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
-		logger.WithError(err).Error("Failed to fetch users with pagination")
+		r.logger.WithError(err).Error("Failed to fetch users with pagination")
 		return nil, 0, err
 	}
 
+	r.logger.WithFields(logrus.Fields{
+		"page":      page,
+		"limit":     limit,
+		"totalData": total,
+	}).Info("Users fetched with pagination")
 	return users, total, nil
 }
 
@@ -66,14 +72,14 @@ func (r *userRepository) GetByID(id uint) (*model.User, error) {
 	err := r.db.First(&user, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.WithField("user_id", id).Warn("Get user failed: ID not found")
+			r.logger.WithField("user_id", id).Warn("Get user failed: ID not found")
 			return nil, errors.New("user not found")
 		}
-		logger.WithField("user_id", id).Error("Failed to get user by ID")
+		r.logger.WithField("user_id", id).Error("Failed to get user by ID")
 		return nil, err
 	}
 
-	logger.WithField("user_id", id).Info("User retrieved successfully by ID")
+	r.logger.WithField("user_id", id).Info("User retrieved successfully by ID")
 	return &user, nil
 }
 
@@ -81,7 +87,7 @@ func (r *userRepository) Register(user *model.User) error {
 
 	processHash, err := hashPassword(user.Password)
 	if err != nil {
-		logger.WithError(err).Error("Failed to hash password")
+		r.logger.WithError(err).Error("Failed to hash password")
 		return err
 	}
 
@@ -89,14 +95,14 @@ func (r *userRepository) Register(user *model.User) error {
 
 	res := r.db.Create(&user)
 	if res.Error != nil {
-		logger.WithFields(logrus.Fields{
+		r.logger.WithFields(logrus.Fields{
 			"email": user.Email,
 			"error": res.Error,
 		}).Error("Failed to register user")
 		return res.Error
 	}
 
-	logger.WithField("email", user.Email).Info("User registered successfully")
+	r.logger.WithField("email", user.Email).Info("User registered successfully")
 	return nil
 
 }
@@ -108,20 +114,20 @@ func (r *userRepository) Login(email, password string) (*model.User, error) {
 	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.WithField("email", email).Warn("Login failed: Email not found")
+			r.logger.WithField("email", email).Warn("Login failed: Email not found")
 			return nil, errors.New("email doesn't exist")
 		}
-		logger.WithError(err).Error("Database error during login")
+		r.logger.WithError(err).Error("Database error during login")
 		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		logger.WithField("email", email).Warn("Login failed: Wrong password")
+		r.logger.WithField("email", email).Warn("Login failed: Wrong password")
 		return nil, errors.New("wrong password")
 	}
 
-	logger.WithField("email", email).Info("User logged in successfully")
+	r.logger.WithField("email", email).Info("User logged in successfully")
 	return &user, nil
 
 }
@@ -129,18 +135,18 @@ func (r *userRepository) Login(email, password string) (*model.User, error) {
 func (r *userRepository) UpdateIsVerified(email string, verified bool) error {
 	result := r.db.Model(&model.User{}).Where("email = ?", email).Update("is_verified", verified)
 	if result.Error != nil {
-		logger.WithFields(logrus.Fields{
+		r.logger.WithFields(logrus.Fields{
 			"email": email,
 			"error": result.Error,
 		}).Error("Failed to update is_verified status")
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		logger.WithField("email", email).Warn("No user found to update verification")
+		r.logger.WithField("email", email).Warn("No user found to update verification")
 		return gorm.ErrRecordNotFound
 	}
 
-	logger.WithField("email", email).Info("User verification status updated")
+	r.logger.WithField("email", email).Info("User verification status updated")
 	return nil
 }
 
@@ -149,23 +155,29 @@ func (r *userRepository) GetByEmail(email string) (*model.User, error) {
 	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			r.logger.WithField("email", email).Warn("User not found by email")
 			return nil, errors.New("user not found")
 		}
+		r.logger.WithFields(logrus.Fields{
+			"email": email,
+			"error": err,
+		}).Error("Failed to get user by email")
 		return nil, err
 	}
+	r.logger.WithField("email", email).Info("User fetched successfully by email")
 	return &user, nil
 }
 
 func (r *userRepository) UpdatePasswordByEmail(email, newPassword string) error {
 	hashed, err := hashPassword(newPassword)
 	if err != nil {
-		logger.WithError(err).Error("Failed to hash new password")
+		r.logger.WithError(err).Error("Failed to hash new password")
 		return err
 	}
 
 	result := r.db.Model(&model.User{}).Where("email = ?", email).Update("password", hashed)
 	if result.Error != nil {
-		logger.WithFields(logrus.Fields{
+		r.logger.WithFields(logrus.Fields{
 			"email": email,
 			"error": result.Error,
 		}).Error("Failed to update password")
@@ -175,7 +187,7 @@ func (r *userRepository) UpdatePasswordByEmail(email, newPassword string) error 
 		return gorm.ErrRecordNotFound
 	}
 
-	logger.WithField("email", email).Info("User password updated successfully")
+	r.logger.WithField("email", email).Info("User password updated successfully")
 	return nil
 }
 
@@ -195,7 +207,7 @@ func (r *userRepository) UpdateBalanceByEmail(email string, balance float64) err
 		Update("balance", gorm.Expr("balance + ?", balance))
 
 	if result.Error != nil {
-		logger.WithFields(logrus.Fields{
+		r.logger.WithFields(logrus.Fields{
 			"email": email,
 			"error": result.Error,
 		}).Error("Failed to update balance")
@@ -203,11 +215,11 @@ func (r *userRepository) UpdateBalanceByEmail(email string, balance float64) err
 	}
 
 	if result.RowsAffected == 0 {
-		logger.WithField("email", email).Warn("No user found to update balance")
+		r.logger.WithField("email", email).Warn("No user found to update balance")
 		return gorm.ErrRecordNotFound
 	}
 
-	logger.WithFields(logrus.Fields{
+	r.logger.WithFields(logrus.Fields{
 		"email":   email,
 		"balance": balance,
 	}).Info("User balance updated successfully")

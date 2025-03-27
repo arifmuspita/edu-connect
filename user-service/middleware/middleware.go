@@ -11,9 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logrus.New()
+var log *logrus.Logger
 
-func LogrusMiddleware(logger *logrus.Logger) echo.MiddlewareFunc {
+func InitMiddlewareLogger(l *logrus.Logger) {
+	log = l
+}
+
+func LogrusMiddleware() echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:       true,
 		LogStatus:    true,
@@ -23,7 +27,7 @@ func LogrusMiddleware(logger *logrus.Logger) echo.MiddlewareFunc {
 		LogLatency:   true,
 		LogError:     true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logger.WithFields(logrus.Fields{
+			log.WithFields(logrus.Fields{
 				"uri":        v.URI,
 				"status":     v.Status,
 				"method":     v.Method,

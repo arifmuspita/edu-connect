@@ -14,11 +14,14 @@ import (
 
 type PasswordResetHandler struct {
 	resetUC usecase.IPasswordResetUseCase
+	logger  *logrus.Entry
 }
 
-func NewPasswordResetHandler(resetUC usecase.IPasswordResetUseCase) *PasswordResetHandler {
+func NewPasswordResetHandler(resetUC usecase.IPasswordResetUseCase, logger *logrus.Logger) *PasswordResetHandler {
+	enrichedLogger := logger.WithField("layer", "handler")
 	return &PasswordResetHandler{
 		resetUC: resetUC,
+		logger:  enrichedLogger,
 	}
 }
 
@@ -34,11 +37,11 @@ func (h *PasswordResetHandler) RequestResetPassword(c echo.Context) error {
 	var req RequestResetPasswordRequest
 
 	if err := c.Bind(&req); err != nil {
-		logrus.Warn("Invalid request body for RequestResetPassword")
+		h.logger.Warn("Invalid request body for RequestResetPassword")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
-	logrus.WithField("email", req.Email).Info("Password reset request received")
+	h.logger.WithField("email", req.Email).Info("Password reset request received")
 
 	err := h.resetUC.RequestReset(req.Email)
 	if err != nil {
@@ -46,11 +49,11 @@ func (h *PasswordResetHandler) RequestResetPassword(c echo.Context) error {
 		if errors.Is(err, customErr.ErrRegisterEmailRequired) || errors.Is(err, customErr.ErrLoginEmailNotFound) {
 			statusCode = http.StatusBadRequest
 		}
-		logrus.WithError(err).WithField("email", req.Email).Error("Password reset request failed")
+		h.logger.WithError(err).WithField("email", req.Email).Error("Password reset request failed")
 		return utils.ErrorResponse(c, statusCode, err.Error())
 	}
 
-	logrus.WithField("email", req.Email).Info("Password reset token sent successfully")
+	h.logger.WithField("email", req.Email).Info("Password reset token sent successfully")
 
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Password reset link sent to email")
 }
@@ -62,11 +65,11 @@ func (h *PasswordResetHandler) ResetPassword(c echo.Context) error {
 	var req ResetPasswordRequest
 
 	if err := c.Bind(&req); err != nil {
-		logrus.Warn("Invalid request body for ResetPassword")
+		h.logger.Warn("Invalid request body for ResetPassword")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
-	logrus.WithField("token", token).Info("Reset password execution started")
+	h.logger.WithField("token", token).Info("Reset password execution started")
 
 	err := h.resetUC.ResetPassword(token, req.NewPassword)
 	if err != nil {
@@ -74,10 +77,10 @@ func (h *PasswordResetHandler) ResetPassword(c echo.Context) error {
 		if errors.Is(err, customErr.ErrVerificationTokenInvalid) || errors.Is(err, customErr.ErrRegisterInvalidPassword) {
 			statusCode = http.StatusBadRequest
 		}
-		logrus.WithError(err).WithField("token", token).Error("Reset password failed")
+		h.logger.WithError(err).WithField("token", token).Error("Reset password failed")
 		return utils.ErrorResponse(c, statusCode, err.Error())
 	}
 
-	logrus.WithField("token", token).Info("Password reset successfully")
+	h.logger.WithField("token", token).Info("Password reset successfully")
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Password has been reset successfully")
 }

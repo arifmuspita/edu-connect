@@ -17,11 +17,14 @@ type requestResendVerify struct {
 
 type VerificationHandler struct {
 	verificationUC usecase.IVerificationUseCase
+	logger         *logrus.Entry
 }
 
-func NewVerificationHandler(verificationUC usecase.IVerificationUseCase) *VerificationHandler {
+func NewVerificationHandler(verificationUC usecase.IVerificationUseCase, logger *logrus.Logger) *VerificationHandler {
+	enrichedLogger := logger.WithField("layer", "handler")
 	return &VerificationHandler{
 		verificationUC: verificationUC,
+		logger:         enrichedLogger,
 	}
 }
 
@@ -30,24 +33,24 @@ func (h *VerificationHandler) Verify(c echo.Context) error {
 	token := c.QueryParam("token")
 
 	if token == "" {
-		logrus.Warn("Verification failed: token is missing")
+		h.logger.Warn("Verification failed: token is missing")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Token is required")
 	}
 
-	logrus.WithField("token", token).Info("Verification request received")
+	h.logger.WithField("token", token).Info("Verification request received")
 
 	err := h.verificationUC.VerifyToken(token)
 	if err != nil {
 		if err == customErr.ErrVerificationTokenInvalid {
-			logrus.WithField("token", token).Warn("Verification failed: invalid or expired token")
+			h.logger.WithField("token", token).Warn("Verification failed: invalid or expired token")
 			return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired token")
 		}
 
-		logrus.WithField("token", token).Error("Verification failed: internal error")
+		h.logger.WithField("token", token).Error("Verification failed: internal error")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Internal server error")
 	}
 
-	logrus.WithField("token", token).Info("User verified successfully")
+	h.logger.WithField("token", token).Info("User verified successfully")
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Email verified successfully")
 
 }
@@ -59,27 +62,27 @@ func (h *VerificationHandler) ResendVerification(c echo.Context) error {
 	}
 
 	if req.Email == "" {
-		logrus.Warn("Resend verification failed: email is missing")
+		h.logger.Warn("Resend verification failed: email is missing")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Email is required")
 	}
 
-	logrus.WithField("email", req.Email).Info("Resend verification request received")
+	h.logger.WithField("email", req.Email).Info("Resend verification request received")
 
 	err := h.verificationUC.ResendVerification(req.Email)
 	if err != nil {
 		if err == customErr.ErrLoginEmailNotFound {
-			logrus.WithField("email", req.Email).Warn("Resend verification failed: Email not found")
+			h.logger.WithField("email", req.Email).Warn("Resend verification failed: Email not found")
 			return utils.ErrorResponse(c, http.StatusBadRequest, "Email not found")
 		}
 		if err == customErr.ErrVerificationTokenStillValid {
-			logrus.WithField("email", req.Email).Warn("Resend verification denied: Active token exists")
+			h.logger.WithField("email", req.Email).Warn("Resend verification denied: Active token exists")
 			return utils.ErrorResponse(c, http.StatusBadRequest, "Existing verification token still valid")
 		}
 
-		logrus.WithField("email", req.Email).Error("Resend verification failed: internal error")
+		h.logger.WithField("email", req.Email).Error("Resend verification failed: internal error")
 		return utils.ErrorResponse(c, http.StatusInternalServerError, "Internal server error")
 	}
 
-	logrus.WithField("email", req.Email).Info("Verification email resent successfully")
+	h.logger.WithField("email", req.Email).Info("Verification email resent successfully")
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Verification email resent successfully")
 }

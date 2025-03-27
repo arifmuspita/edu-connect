@@ -16,11 +16,14 @@ import (
 
 type UserHandler struct {
 	userUseCase usecase.IUserUseCase
+	logger      *logrus.Entry
 }
 
-func NewUserHandler(userUseCase usecase.IUserUseCase) UserHandler {
+func NewUserHandler(userUseCase usecase.IUserUseCase, logger *logrus.Logger) UserHandler {
+	enrichedLogger := logger.WithField("layer", "handler")
 	return UserHandler{
 		userUseCase: userUseCase,
+		logger:      enrichedLogger,
 	}
 }
 
@@ -77,7 +80,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 
 	if err := c.Bind(&user); err != nil {
 
-		logger.WithFields(logrus.Fields{
+		h.logger.WithFields(logrus.Fields{
 			"error": err.Error(),
 		}).Warn("Invalid request body for Register")
 
@@ -85,7 +88,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 
 	}
 
-	logger.WithField("email", user.Email).Info("Register request received")
+	h.logger.WithField("email", user.Email).Info("Register request received")
 
 	if err := h.userUseCase.Register(user); err != nil {
 
@@ -124,7 +127,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 
 		}
 
-		logger.WithFields(logrus.Fields{
+		h.logger.WithFields(logrus.Fields{
 			"email": user.Email,
 			"error": errorMessage,
 		}).Error("Register failed")
@@ -132,7 +135,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return utils.ErrorResponse(c, statusCode, errorMessage)
 	}
 
-	logger.WithField("email", user.Email).Info("User registered successfully")
+	h.logger.WithField("email", user.Email).Info("User registered successfully")
 
 	return utils.SuccessResponse(c, http.StatusCreated, nil, "User register successful")
 }
@@ -152,13 +155,13 @@ func (h *UserHandler) Login(c echo.Context) error {
 
 	if err := c.Bind(&data); err != nil {
 
-		logger.Warn("Invalid request body for Login")
+		h.logger.Warn("Invalid request body for Login")
 
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 
 	}
 
-	logger.WithField("email", data.Email).Info("Login request received")
+	h.logger.WithField("email", data.Email).Info("Login request received")
 
 	token, err := h.userUseCase.Login(data.Email, data.Password)
 
@@ -194,7 +197,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 
 		}
 
-		logger.WithFields(logrus.Fields{
+		h.logger.WithFields(logrus.Fields{
 			"email": data.Email,
 			"error": errorMessage,
 		}).Warn("Login failed")
@@ -202,7 +205,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return utils.ErrorResponse(c, statusCode, errorMessage)
 	}
 
-	logger.WithField("email", data.Email).Info("User logged in successfully")
+	h.logger.WithField("email", data.Email).Info("User logged in successfully")
 
 	return utils.SuccessResponse(c, http.StatusOK, LoginResponse{
 		Token: token,
@@ -223,11 +226,11 @@ func (h *UserHandler) ForgotPassword(c echo.Context) error {
 	var req ForgotPasswordRequest
 
 	if err := c.Bind(&req); err != nil {
-		logger.Warn("Invalid request body for ForgotPassword")
+		h.logger.Warn("Invalid request body for ForgotPassword")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
-	logger.WithField("email", req.Email).Info("Forgot password request received")
+	h.logger.WithField("email", req.Email).Info("Forgot password request received")
 
 	err := h.userUseCase.ForgotPassword(req.Email, req.NewPassword)
 	if err != nil {
@@ -240,7 +243,7 @@ func (h *UserHandler) ForgotPassword(c echo.Context) error {
 			statusCode = http.StatusInternalServerError
 		}
 
-		logger.WithFields(logrus.Fields{
+		h.logger.WithFields(logrus.Fields{
 			"email": req.Email,
 			"error": err.Error(),
 		}).Error("Forgot password failed")
@@ -249,7 +252,7 @@ func (h *UserHandler) ForgotPassword(c echo.Context) error {
 
 	}
 
-	logger.WithField("email", req.Email).Info("Password reset successfully")
+	h.logger.WithField("email", req.Email).Info("Password reset successfully")
 
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Password has been reset")
 }
@@ -268,7 +271,7 @@ func (h *UserHandler) GetUserByID(c echo.Context) error {
 
 	idUint, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		logger.WithField("id", idParam).Warn("Invalid user ID param")
+		h.logger.WithField("id", idParam).Warn("Invalid user ID param")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid user ID")
 	}
 
@@ -331,11 +334,11 @@ func (h *UserHandler) UpdateBalance(c echo.Context) error {
 	var req UpdateBalanceRequest
 
 	if err := c.Bind(&req); err != nil {
-		logger.Warn("Invalid request body for UpdateBalance")
+		h.logger.Warn("Invalid request body for UpdateBalance")
 		return utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
-	logger.WithFields(logrus.Fields{
+	h.logger.WithFields(logrus.Fields{
 		"email":   req.Email,
 		"balance": req.Balance,
 	}).Info("Update balance request received")
@@ -351,7 +354,7 @@ func (h *UserHandler) UpdateBalance(c echo.Context) error {
 			statusCode = http.StatusInternalServerError
 		}
 
-		logger.WithFields(logrus.Fields{
+		h.logger.WithFields(logrus.Fields{
 			"email":   req.Email,
 			"balance": req.Balance,
 			"error":   err.Error(),
@@ -360,7 +363,7 @@ func (h *UserHandler) UpdateBalance(c echo.Context) error {
 		return utils.ErrorResponse(c, statusCode, err.Error())
 	}
 
-	logger.WithFields(logrus.Fields{
+	h.logger.WithFields(logrus.Fields{
 		"email":   req.Email,
 		"balance": req.Balance,
 	}).Info("User balance updated successfully")
