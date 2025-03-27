@@ -346,7 +346,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "https://user-service-639370343880.asia-southeast1.run.app",
-	BasePath:         "/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "User Service API",
 	Description:      "This is a user service.",
