@@ -1,5 +1,5 @@
 Table users {
-  id integer [primary key]
+  user_id integer [primary key]
   name varchar(50) 
   email varchar(100) [unique]
   password varchar(255)
@@ -11,7 +11,7 @@ Table users {
 }
 
 Table email_verifications {
-  id integer [primary key]
+  email_verification_id integer [primary key]
   email varchar(100) [ref: > users.email]
   token varchar(255)
   expired_at timestamp
@@ -20,7 +20,7 @@ Table email_verifications {
 }
 
 Table password_resets {
-  id integer [primary key]
+  password_reset_id integer [primary key]
   email varchar(100) [ref: > users.email]
   token varchar(255)
   expired_at timestamp
