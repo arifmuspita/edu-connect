@@ -257,15 +257,6 @@ func (h *UserHandler) ForgotPassword(c echo.Context) error {
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Password has been reset")
 }
 
-// GetUserByID godoc
-// @Summary Get user by ID
-// @Description Retrieve a single user by their ID
-// @Tags Users
-// @Produce json
-// @Param id path int true "User ID"
-// @Success 200 {object} utils.APIResponse
-// @Failure 400,404,500 {object} utils.APIResponse
-// @Router /v1/users/{id} [get]
 func (h *UserHandler) GetUserByID(c echo.Context) error {
 	idParam := c.Param("id")
 
@@ -286,16 +277,6 @@ func (h *UserHandler) GetUserByID(c echo.Context) error {
 	return utils.SuccessResponse(c, http.StatusOK, utils.ConvertToUserResponse(*user), "User fetched successfully")
 }
 
-// GetAllUsersPaginated godoc
-// @Summary Get all users with pagination
-// @Description Retrieve list of users with pagination metadata
-// @Tags Users
-// @Produce json
-// @Param page query int false "Page number"
-// @Param limit query int false "Items per page"
-// @Success 200 {object} utils.APIResponse
-// @Failure 500 {object} utils.APIResponse
-// @Router /v1/users [get]
 func (h *UserHandler) GetAllUsersPaginated(c echo.Context) error {
 	pageQuery := c.QueryParam("page")
 	limitQuery := c.QueryParam("limit")

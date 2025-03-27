@@ -28,6 +28,16 @@ func NewVerificationHandler(verificationUC usecase.IVerificationUseCase, logger 
 	}
 }
 
+// Verify godoc
+// @Summary Verify email with token
+// @Description Verifies the user's email using a token sent via email
+// @Tags Verification
+// @Accept json
+// @Produce json
+// @Param token query string true "Verification Token"
+// @Success 200 {object} utils.APIResponse
+// @Failure 400 {object} utils.APIResponse
+// @Router /v1/verify [get]
 func (h *VerificationHandler) Verify(c echo.Context) error {
 
 	token := c.QueryParam("token")
@@ -55,6 +65,16 @@ func (h *VerificationHandler) Verify(c echo.Context) error {
 
 }
 
+// ResendVerification godoc
+// @Summary Resend email verification
+// @Description Sends a new verification email if no valid token exists
+// @Tags Verification
+// @Accept json
+// @Produce json
+// @Param body body requestResendVerify true "Email for Resend Verification"
+// @Success 200 {object} utils.APIResponse
+// @Failure 400,500 {object} utils.APIResponse
+// @Router /v1/resend-verification [post]
 func (h *VerificationHandler) ResendVerification(c echo.Context) error {
 	var req requestResendVerify
 	if err := c.Bind(&req); err != nil {

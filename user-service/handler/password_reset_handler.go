@@ -33,6 +33,16 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
+// RequestResetPassword godoc
+// @Summary Request password reset
+// @Description Sends a password reset link to the user's email
+// @Tags Password Reset
+// @Accept json
+// @Produce json
+// @Param body body RequestResetPasswordRequest true "User email"
+// @Success 200 {object} utils.APIResponse
+// @Failure 400,500 {object} utils.APIResponse
+// @Router /v1/forgot-password [post]
 func (h *PasswordResetHandler) RequestResetPassword(c echo.Context) error {
 	var req RequestResetPasswordRequest
 
@@ -58,6 +68,17 @@ func (h *PasswordResetHandler) RequestResetPassword(c echo.Context) error {
 	return utils.SuccessResponse(c, http.StatusOK, nil, "Password reset link sent to email")
 }
 
+// ResetPassword godoc
+// @Summary Reset user password
+// @Description Resets the user's password using the reset token
+// @Tags Password Reset
+// @Accept json
+// @Produce json
+// @Param token query string true "Reset Token"
+// @Param body body ResetPasswordRequest true "New Password"
+// @Success 200 {object} utils.APIResponse
+// @Failure 400,500 {object} utils.APIResponse
+// @Router /v1/reset-password [post]
 func (h *PasswordResetHandler) ResetPassword(c echo.Context) error {
 
 	token := c.QueryParam("token")

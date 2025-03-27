@@ -19,6 +19,21 @@ definitions:
       token:
         type: string
     type: object
+  handler.RequestResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handler.ResetPasswordRequest:
+    properties:
+      new_password:
+        type: string
+    type: object
+  handler.requestResendVerify:
+    properties:
+      email:
+        type: string
+    type: object
   model.User:
     properties:
       balance:
@@ -163,6 +178,71 @@ paths:
       summary: Register a new user
       tags:
       - Users
+  /v1/resend-verification:
+    post:
+      consumes:
+      - application/json
+      description: Sends a new verification email if no valid token exists
+      parameters:
+      - description: Email for Resend Verification
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.requestResendVerify'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Resend email verification
+      tags:
+      - Verification
+  /v1/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Resets the user's password using the reset token
+      parameters:
+      - description: Reset Token
+        in: query
+        name: token
+        required: true
+        type: string
+      - description: New Password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Reset user password
+      tags:
+      - Password Reset
   /v1/users:
     get:
       description: Retrieve list of users with pagination metadata
@@ -220,4 +300,29 @@ paths:
       summary: Get user by ID
       tags:
       - Users
+  /v1/verify:
+    get:
+      consumes:
+      - application/json
+      description: Verifies the user's email using a token sent via email
+      parameters:
+      - description: Verification Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Verify email with token
+      tags:
+      - Verification
 swagger: "2.0"
