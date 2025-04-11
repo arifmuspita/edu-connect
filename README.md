@@ -1,5 +1,5 @@
 # edu-connect
-EduConnect adalah platform yang menghubungkan institusi pendidikan dengan calon donatur melalui kampanye penggalangan dana yang transparan dan terfokus. Platform ini dirancang untuk membantu institusi mengumpulkan dana pendidikan, yang nantinya dapat digunakan untuk memberikan beasiswa kepada siswa yang membutuhkan.
+EduConnect adalah platform yang menghubungkan institusi pendidikan formal maupun non formal dengan calon donatur melalui kampanye penggalangan dana yang transparan dan terfokus. Platform ini dirancang untuk membantu institusi mengumpulkan dana pendidikan, yang nantinya dapat digunakan untuk memberikan beasiswa kepada siswa yang membutuhkan.
 
 Melalui EduConnect, setiap institusi dapat:
 
