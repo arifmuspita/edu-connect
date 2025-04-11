@@ -12,7 +12,7 @@ Menyalurkan dana tersebut kepada penerima manfaat secara tepat sasaran.
 Platform ini terinspirasi dari konsep seperti Kitabisa.com, namun secara khusus difokuskan untuk mendukung dunia pendidikan di Indonesia. EduConnect dikembangkan dalam waktu 5 hari sebagai proyek akhir Bootcamp Hacktiv8 Golang, mulai dari perencanaan ide hingga presentasi akhir.
 
 ## Arsitektur Sistem EduConnect
-![Arsitektur Sistem](./arsitektur.png)
+![Arsitektur Sistem](./Arsitektur.png)
 
 ## ERD User Service EduConnect
 ![ERD User Service](./erd-user.png)
